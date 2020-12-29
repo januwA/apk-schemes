@@ -1,0 +1,99 @@
+#!/usr/bin/env node
+
+const yargs = require("yargs");
+const fs = require("fs-extra");
+const path = require("path");
+const fxp = require("fast-xml-parser");
+
+
+const { argv } = yargs
+  .config({})
+  .command("apktool", "download Apktool")
+  .alias("h", "help")
+  .alias("v", "version")
+  .help("help");
+
+const { _: ARGV } = argv;
+
+if (ARGV.length === 1 && /\.xml$/.test(ARGV[0])) {
+  const xmlPath = path.relative("./", ARGV[0]);
+  parseAndroidManifesXML(xmlPath);
+}
+
+function parseAndroidManifesXML(xmlPath) {
+  const result = [];
+  if (!fs.existsSync(xmlPath)) {
+    return console.error(`file does not exist: ${xmlPath}`);
+  }
+  const xmlData = fs.readFileSync(xmlPath).toString("utf-8");
+  const xml2json = fxp.parse(xmlData, {
+    attributeNamePrefix: "",
+    attrNodeName: "attr", //default is 'false'
+    textNodeName: "#text",
+    ignoreAttributes: false,
+    ignoreNameSpace: false,
+    allowBooleanAttributes: false,
+    parseNodeValue: true,
+    parseAttributeValue: false,
+    trimValues: true,
+    cdataTagName: "__cdata", //default is 'false'
+    cdataPositionChar: "\\c",
+    parseTrueNumberOnly: false,
+    arrayMode: false, //"strict"
+    stopNodes: ["parse-me-as-string"],
+  });
+  let activity = xml2json?.manifest?.application?.activity;
+  if (!activity) return;
+  if (!Array.isArray(activity)) activity = [activity];
+
+  activity = activity
+    .filter((it) => typeof it === "object")
+    .filter((it) => it.hasOwnProperty("intent-filter"))
+    .map((it) => {
+      if (Array.isArray(it["intent-filter"])) return it;
+      it["intent-filter"] = [it["intent-filter"]];
+      return it;
+    });
+
+  for (let it of activity) {
+    for (it of it["intent-filter"]) {
+      if (!it.hasOwnProperty("data")) continue;
+      if (!Array.isArray(it.category)) it.category = [it.category];
+      if (!Array.isArray(it.action)) it.action = [it.action];
+      if (!Array.isArray(it.data)) it.data = [it.data];
+      for (const it_data of it.data) {
+        if (!it_data.hasOwnProperty("attr")) continue;
+        const { attr } = it_data;
+        if (!attr.hasOwnProperty("android:scheme")) continue;
+
+        result.push({
+          action: it.action
+            .map((it) => it.attr["android:name"])
+            .map((it) => it.replace(/android\.intent\.action\./i, "")),
+          category: it.category
+            .map((it) => it.attr["android:name"])
+            .map((it) => it.replace(/android\.intent\.category\./i, "")),
+          scheme: [
+            attr["android:scheme"],
+            "://",
+            attr["android:host"] ?? "",
+            attr["android:path"] ??
+              attr["android:pathPattern"] ??
+              attr["android:pathPrefix"] ??
+              "",
+          ].join(""),
+        });
+      }
+    }
+  }
+
+  const fname = `${xml2json?.manifest?.attr?.package ?? Date.now()}.json`;
+  fs.writeFile(
+    path.join(path.resolve("./"), fname),
+    JSON.stringify(result),
+    (err) => {
+      if (err) return console.error(err);
+      console.log(`The file (${fname}) has been saved!`);
+    }
+  );
+}

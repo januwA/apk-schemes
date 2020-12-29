@@ -1,0 +1,26 @@
+{
+  "name": "apk-schemes",
+  "version": "1.0.0",
+  "description": "get apk url schemes",
+  "main": "./bin/apk-schemes",
+  "bin": {
+    "apk-schemes": "./bin/apk-schemes"
+  },
+  "scripts": {},
+  "keywords": [
+    "Android schemes",
+    "Ajanuw"
+  ],
+  "homepage": "https://github.com/januwA/apk-schemes",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/januwA/apk-schemes.git"
+  },
+  "author": "Ajanuw",
+  "license": "MIT",
+  "dependencies": {
+    "fast-xml-parser": "^3.17.6",
+    "fs-extra": "^9.0.1",
+    "yargs": "^16.2.0"
+  }
+}
