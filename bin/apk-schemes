@@ -8,7 +8,6 @@ const fxp = require("fast-xml-parser");
 
 const { argv } = yargs
   .config({})
-  .command("apktool", "download Apktool")
   .alias("h", "help")
   .alias("v", "version")
   .help("help");

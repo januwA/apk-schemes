@@ -1,6 +1,6 @@
 {
   "name": "apk-schemes",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "get apk url schemes",
   "main": "./bin/apk-schemes",
   "bin": {
