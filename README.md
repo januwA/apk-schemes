@@ -18,5 +18,5 @@ $ npm link
 $ npm unlink
 ```
 
-See aosl:
+See also:
   - https://developer.android.com/training/app-links/deep-linking?hl=zh-cn
